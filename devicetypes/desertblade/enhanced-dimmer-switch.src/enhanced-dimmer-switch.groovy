@@ -245,7 +245,6 @@ def indicatorNever() {
 
 def invertSwitch(invert) {
 	if (invert) {
-      log.debug("----${invert}")
 		zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 4, size: 1).format()
 	}
 	else {
@@ -268,16 +267,19 @@ def updateSettings() {
         cmds << zwave.configurationV1.configurationSet(configurationValue: [manualStepSize], parameterNumber: 9, size: 1).format()
         cmds << zwave.configurationV1.configurationSet(configurationValue: [manualStepDuration], parameterNumber: 10, size: 1).format()
         
+        if (invertSwitch.toBoolean()) {
+		    cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 4, size: 1).format()
+		} else {
+			cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 4, size: 1).format()
+		}
+        
         //Getting the new settings (check logs) -- Don't really use for anything else
-        /*
+      
         cmds << zwave.configurationV1.configurationGet(parameterNumber: 7).format()
    		cmds << zwave.configurationV1.configurationGet(parameterNumber: 8).format()
     	cmds << zwave.configurationV1.configurationGet(parameterNumber: 9).format()
     	cmds << zwave.configurationV1.configurationGet(parameterNumber: 10).format()
-        */
+        cmds << zwave.configurationV1.configurationGet(parameterNumber: 4).format()
     
     delayBetween(cmds, 200)
-  
-    invertSwitch(invertSwitch.toBoolean())
-
 }
