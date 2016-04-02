@@ -1,5 +1,5 @@
 # Enhanced-Dimmer-Switch
-Smartthings Dimmer Switch Device Handler. Allows customization of switch's behavior.
+Smartthings Dimmer Switch Device Handler. Allows customization of switch's behavior. I use it for my GE Z-Wave Smart Dimmer (In-Wall), 12724 switch.
 
 # Usage
 Open up the device confiruation menu (the Gear Icon).  Choose settings that you like.  Hit **Configure Tile** in device.
