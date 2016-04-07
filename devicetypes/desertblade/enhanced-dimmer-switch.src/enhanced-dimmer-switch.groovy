@@ -33,15 +33,15 @@ metadata {
 
 	preferences {
        input ( "stepSize", "number", title: "zWave Size of Steps in Percent",
-              defaultValue: 1, range: "1..99", required: true)
+              defaultValue: 1, range: "1..99", required: false)
        input ( "stepDuration", "number", title: "zWave Steps Intervals each 10 ms",
-              defaultValue: 3,range: "1..255", required: true)
+              defaultValue: 3,range: "1..255", required: false)
        input ( "invertSwitch", "boolean", title: "Is the switch Inverted?",
               defaultValue: false, required: false)
        input ( "manualStepSize", "number", title: "Manual Size of Steps in Percent",
-              defaultValue: 1, range: "1..99", required: true)
+              defaultValue: 1, range: "1..99", required: false)
        input ( "manualStepDuration", "number", title: "Manual Steps Intervals Each 10 ms",
-              defaultValue: 3,range: "1..255", required: true)
+              defaultValue: 3,range: "1..255", required: false)
     }
 
 	simulator {
