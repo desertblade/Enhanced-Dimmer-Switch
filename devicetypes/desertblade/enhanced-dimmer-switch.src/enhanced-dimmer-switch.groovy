@@ -281,5 +281,5 @@ def updateSettings() {
     	cmds << zwave.configurationV1.configurationGet(parameterNumber: 10).format()
         cmds << zwave.configurationV1.configurationGet(parameterNumber: 4).format()
     
-    delayBetween(cmds, 200)
+    delayBetween(cmds, 500)
 }
