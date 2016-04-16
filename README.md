@@ -7,7 +7,8 @@ Open up the device confiruation menu (the Gear Icon).  Choose settings that you 
 ## Hints
 
 For instant on set Steps in Percent to 99.
-My LED lights seem to 10% steps at 20 or 10 delay
+
+My LED lights seem to like 5% steps at 20 or 10 delay.
 
 
 # Install
