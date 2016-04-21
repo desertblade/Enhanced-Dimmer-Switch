@@ -30,4 +30,18 @@ My LED lights seem to like 3% or 5% steps. With a 10 to 20 delay between.
  * Choose "**From Code**"
  * Copy Source code from *enhanced-dimmer-switch.groovy*
  * Remember to open each device and click "**Publish**" and "**For me**"
+ 
+# Change Device Handler
+Once installed you will need to change you device to use this handler.
+
+ * Go to "**My Devices**" in the IDE
+ * Click on the switch you want to modify
+ * Click **Edit** Button
+ * In "**Type**" Filed choose **Enhanced Dimmer Switch**
+ * Click **Save**
+ * Goto the device on you mobile device
+ * Modify settings in Prefrences
+ * Click Configure
+ 
+ 
 
