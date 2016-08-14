@@ -194,8 +194,9 @@ def off() {
 def setLevel(value) {
 
 	log.debug "setLevel >> value: $value"
-//    setLevel(value, 2)
+   setLevel(value, 2)
 
+/*
 def valueaux = value as Integer
 	def level = Math.max(Math.min(valueaux, 99), 0)
 	if (level > 0) {
@@ -205,7 +206,7 @@ def valueaux = value as Integer
 	}
 	sendEvent(name: "level", value: level, unit: "%")
 	delayBetween ([zwave.switchMultilevelV2.switchMultilevelSet(value: level).format(), zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
-
+*/
 }
 
 def setLevel(value, duration) {
