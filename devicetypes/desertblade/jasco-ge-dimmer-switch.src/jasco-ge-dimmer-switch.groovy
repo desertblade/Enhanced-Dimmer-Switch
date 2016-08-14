@@ -63,13 +63,13 @@ metadata {
        input ( "stepSize", "number", title: "zWave Size of Steps in Percent",
               defaultValue: 1, range: "1..99", description:"Enter Value, Default 1", required: false)
        input ( "stepDuration", "number", title: "zWave Steps Intervals in ms",
-              defaultValue: 30,range: "10..2550", description:"Enter Value, Default 30", required: false)
+              defaultValue: 3,range: "1..255", description:"Enter Value, Default 30", required: false)
        input ( "invertSwitch", "boolean", title: "Is the switch Inverted?",
               defaultValue: false, required: false)
        input ( "manualStepSize", "number", title: "Manual Size of Steps in Percent",
               defaultValue: 1, range: "1..99", description:"Enter Value, Default 1", required: false)
        input ( "manualStepDuration", "number", title: "Manual Steps Intervals in ms",
-              defaultValue: 30,range: "10..2550", description:"Enter Value, Default 30", required: false)
+              defaultValue: 3,range: "1..255", description:"Enter Value, Default 30", required: false)
     input ( "lowLevel", "number", title: "Low Light Level",
               description: "Enter in a number between 1-99.", range: "1..99", defaultValue: 10, required: false)
        input ( "mediumLevel", "number", title: "Medium Light Level",
@@ -151,16 +151,16 @@ metadata {
 	}
 }
 
-def newparse(String description) {
+def parse(String description) {
 	def item1 = [
-	//	canBeCurrentState: true,
+		canBeCurrentState: false,
 		linkText: getLinkText(device),
-		isStateChange: true,
+		isStateChange: false,
 		displayed: false,
 		descriptionText: description,
 		value:  description
 	]
-	def result = []
+	def result
 	def cmd = zwave.parse(description, [0x20: 1, 0x26: 1, 0x70: 1])
 	if (cmd) {
 		result = createEvent(cmd, item1)
@@ -169,73 +169,14 @@ def newparse(String description) {
 		item1.displayed = displayed(description, item1.isStateChange)
 		result = [item1]
 	}
-	log.debug "Parse returned ${result?.descriptionText}"
-    log.debug "Jeff: ${item1?.value}"
-	return result
-}
-
-
-def parse(String description) {
-	def result = []
-
-	if (description != "updated") {
-		log.debug "parse() >> zwave.parse($description)"
-        state.offCount = 0
-		def cmd = zwave.parse(description, [0x20: 1, 0x26: 1, 0x70: 1])
-		if (cmd) {
-			result = zwaveEvent(cmd)
-            
-            log.debug "cmd ${cmd}"
-		}
-	} else {
-    	log.debug ("in else")
-    	if ( result.value[0] == "off"  ) {
-      def timeDiff = now() - state?.offCountTime 
-   		log.debug "Time Diff: ${timeDiff}"
-   	 	if ( timeDiff > 3000  ) {
-        	state.offCountTime = now()
-             state.offCount = 1
-          //dimmerEvents(cmd)
-            } else {
-            	//state.offCountTime = now()
-          	 	state.offCount = state.offCount + 1
-           }
     
-    }
-    }
-    
-    
-    
-    
-	if (result?.name == 'hail' && hubFirmwareLessThan("000.011.00602")) {
-		result = [result, response(zwave.basicV1.basicGet())]
-		log.debug "Was hailed: requesting state update"
-	} else {
-		log.debug "Parse returned ${result?.descriptionText}"
-	}
-    
-    log.debug "result ${result}"
-    log.debug "offcount: ${state.offCount}"
-    
-    log.debug ( "value:${result.value}, isStateChange:${result.isStateChange}" )
-    /*
- 
-    if ( result.value[0] == "off" && !result.isStateChange[0]  ) {
-      def timeDiff = now() - state?.offCountTime 
-   		log.debug "Time Diff: ${timeDiff}"
-   	 	if ( timeDiff > 3000  ) {
-        	state.offCountTime = now()
-             state.offCount = 1
-          //dimmerEvents(cmd)
-            } else {
-            	//state.offCountTime = now()
-          	 	state.offCount = state.offCount + 1
-           }
-           
-          } else {
-          	state.offCount = 0
-            }
-    
+          if ( state.offCount > 1 ) {
+       		//def midLevel = Math.max(Math.min(midLevel, 99), 1)
+            //state.offCount = 0
+            log.debug "if"
+       		result = [response(zwave.basicV1.basicSet(value: 20).format())]
+       }
+  /* 
     if ( result.value[0] == "on" && state.offCount == 1 ) {
     	state.offCount = 0
        	//def highLevel = Math.max(Math.min(highLevel, 99), 1)
@@ -251,32 +192,100 @@ def parse(String description) {
        }
        log.debug "end result ${result}"
         log.debug "end offcount: ${state.offCount}"
+    
+    
     */
     
+	log.debug "Parse returned ${result?.descriptionText}"
+	result
+}
+
+
+
+def createEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd, Map item1) {
+		log.debug "BasicReport: ${cmd}"
+    def result = doCreateEvent(cmd, item1)
+	for (int i = 0; i < result.size(); i++) {
+    	log.debug "Physical"
+         log.trace "${result.value[0]}"
+   	if ( result.value[0] == "off"  ) {
+      def timeDiff = now() - state?.offCountTime 
+   		log.debug "Time Diff: ${timeDiff}"
+   	 	if ( timeDiff > 5000  ) {
+        	state.offCountTime = now()
+             state.offCount = 1
+          //dimmerEvents(cmd)
+            } else {
+            	state.offCountTime = now()
+          	 	state.offCount = state.offCount + 1
+           }
+           
+          } else {
+          	state.offCount = 0
+            }
+		result[i].type = "physical"
+	}
+    log.debug "offcount: ${state.offCount}"
     
-	return result
+	result
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
-	log.debug "BasicReport: ${cmd}"
-		dimmerEvents(cmd)
-    
-}	
-
-def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
-	log.debug "BasicSet"
-	dimmerEvents(cmd)
+def createEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd, Map item1) {
+log.debug "BasicSet"
+	def result = doCreateEvent(cmd, item1)
+	for (int i = 0; i < result.size(); i++) {
+		result[i].type = "physical"
+	}
+	result
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelReport cmd) {
-log.debug "MultiLevelReport"
-	dimmerEvents(cmd)
+
+
+def createEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelSet cmd, Map item1) {
+log.debug "MultiLevelSet"
+	def result = doCreateEvent(cmd, item1)
+	for (int i = 0; i < result.size(); i++) {
+		result[i].type = "physical"
+	}
+	result
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelSet cmd) {
-	log.debug "MultiLevelSet"
-	dimmerEvents(cmd)
+def createEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelReport cmd, Map item1) {
+	log.debug "MultiLevelReport"
+    def result = doCreateEvent(cmd, item1)
+	result[0].descriptionText = "${item1.linkText} is ${item1.value}"
+	result[0].handlerName = cmd.value ? "statusOn" : "statusOff"
+	for (int i = 0; i < result.size(); i++) {
+		result[i].type = "digital"
+	}
+	result
 }
+
+def doCreateEvent(physicalgraph.zwave.Command cmd, Map item1) {
+	def result = [item1]
+
+	item1.name = "switch"
+	item1.value = cmd.value ? "on" : "off"
+	item1.handlerName = item1.value
+	item1.descriptionText = "${item1.linkText} was turned ${item1.value}"
+	item1.canBeCurrentState = true
+	item1.isStateChange = isStateChange(device, item1.name, item1.value)
+	item1.displayed = item1.isStateChange
+
+	if (cmd.value >= 5) {
+		def item2 = new LinkedHashMap(item1)
+		item2.name = "level"
+		item2.value = cmd.value as String
+		item2.unit = "%"
+		item2.descriptionText = "${item1.linkText} dimmed ${item2.value} %"
+		item2.canBeCurrentState = true
+		item2.isStateChange = isStateChange(device, item2.name, item2.value)
+		item2.displayed = false
+		result << item2
+	}
+	result
+}
+
 
 private dimmerEvents(physicalgraph.zwave.Command cmd) {
 	def value = (cmd.value ? "on" : "off")
@@ -337,7 +346,7 @@ def off() {
 }
 
 
-def oldsetLevel(value) {
+def setLevel(value) {
 	log.debug "setLevel >> value: $value"
 	def valueaux = value as Integer
 	def level = Math.max(Math.min(valueaux, 99), 0)
@@ -346,11 +355,12 @@ def oldsetLevel(value) {
 	} else {
 		sendEvent(name: "switch", value: "off")
 	}
-	sendEvent(name: "level", value: level, unit: "%")
-	delayBetween ([zwave.basicV1.basicSet(value: level).format(), zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
+//	sendEvent(name: "level", value: level, unit: "%")
+	delayBetween ([zwave.powerlevelV1.powerlevelSet(powerLevel: 67).format(), zwave.basicV1.basicSet(value:  0xFF).format()], 500)
+    //delayBetween ([zwave.commands.powerlevelv1.PowerlevelSet(value: level).format()], 500)
 }
 
-def setLevel(value) {
+def newsetLevel(value) {
 	log.debug "setLevel >> value: $value"
 	def valueaux = value as Integer
     def duration = 6000
@@ -364,7 +374,7 @@ def setLevel(value) {
 	setLevel(level, duration)
 }
 
-def setLevel(value, duration) {
+def setLevel2(value, duration) {
 	log.debug "setLevel >> value: $value, duration: $duration"
 	def valueaux = value as Integer
 	def level = Math.max(Math.min(valueaux, 99), 0)
@@ -389,7 +399,7 @@ def highLevel() {
 }
 
 def mediumLevel() {
-	presetLevel(mediumLevel)
+	setLevel(mediumLevel)
 }
 
 def lowLevel() {
@@ -438,12 +448,12 @@ def invertSwitch(invert) {
 
 def updateSettings() {
 	log.debug("Updating Switch Settings")
- 
+
     //lets make sure we are in the the right ranges
-    def stepSize = Math.max(Math.min(stepSize, 99), 1)
-    def stepDuration = Math.max(Math.min((stepDuration/10), 255), 1)
-    def manualStepSize = Math.max(Math.min(manualStepSize, 99), 1)
-    def manualStepDuration = Math.max(Math.min((manualStepDuration/10), 255), 1)
+    def stepSize = Math.max(Math.min(stepSize.toInteger(), 99), 1)
+   // def newStepDuration = Math.max(Math.min((stepDuration), 255), 1)
+   def manualStepSize = Math.max(Math.min(manualStepSize, 99), 1)
+   // def newManualStepDuration = Math.max(Math.min((manualStepDuration), 255), 1)
    
      def cmds = []
         cmds << zwave.configurationV1.configurationSet(configurationValue: [stepSize], parameterNumber: 7, size: 1).format()
